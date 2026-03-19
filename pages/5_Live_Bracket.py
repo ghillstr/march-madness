@@ -42,9 +42,121 @@ LEFT_REG   = ["East","South"]
 RIGHT_REG  = ["West","Midwest"]
 
 # ---------------------------------------------------------------------------
+# Auto-refresh scores from ESPN
+# ---------------------------------------------------------------------------
+def sync_espn_scores():
+    """Pull completed game scores from ESPN and update the DB."""
+    import urllib.request, json, re
+    from datetime import datetime, timedelta
+    from difflib import get_close_matches
+
+    def strip_nickname(name):
+        return re.sub(
+            r'\s+(Mustangs?|RedHawks?|Mountain Hawks?|Panthers?|Demon Deacons?|Midshipmen|'
+            r'Redbirds?|Golden Flashes?|Wolverines?|Revolutionar\w+|Braves?|Flyers?|'
+            r'Lobos?|Bearkats?|Wolf Pack|Racers?|Rams?|Hawks?|Golden Bears?|Flames?|'
+            r'Cornhuskers?|Trojans?|Buckeyes?|Horned Frogs?|Blue Devils?|Badgers?|'
+            r'Commodores?|Cowboys?|Cardinals?|Bulls?|Saints?|Aggies?|Wildcats?|'
+            r'Bulldogs?|Tigers?|Bears?|Bruins?|Eagles?|Owls?|Tar Heels?|Hoosiers?|'
+            r'Illini|Fighting Illini|Spartans?|Gators?|Seminoles?|Hurricanes?|'
+            r'Yellow Jackets?|Hokies?|Cavaliers?|Nittany Lions?|Fighting Irish|'
+            r'Longhorns?|Volunteers?|Razorbacks?|Mountaineers?|Cougars?|Sun Devils?|'
+            r'Buffaloes?|Utes?|Ducks?|Beavers?|Sooners?|Boilermakers?|Hawkeyes?|'
+            r'Terrapins?|Retrievers?|Penguins?|Pilots?|Ramblers?|Monarchs?|'
+            r'Colonials?|Lumberjacks?|Beacons?|Explorers?|Spiders?|'
+            r'Retrievers?|Musketeers?|Friars?|Billikens?|Aztecs?|Lobos?)$',
+            '', name, flags=re.IGNORECASE,
+        ).strip()
+
+    espn_games = []
+    for offset in range(22):  # cover full tournament window
+        date = (datetime(CURRENT_SEASON, 3, 18) + timedelta(days=offset)).strftime('%Y%m%d')
+        url = (f'https://site.api.espn.com/apis/site/v2/sports/basketball/'
+               f'mens-college-basketball/scoreboard?groups=50&dates={date}')
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read())
+            for event in data.get('events', []):
+                comps = event.get('competitions', [{}])[0]
+                status = comps.get('status', {}).get('type', {}).get('name', '')
+                if status != 'STATUS_FINAL':
+                    continue
+                competitors = comps.get('competitors', [])
+                if len(competitors) == 2:
+                    t1, t2 = competitors[0], competitors[1]
+                    espn_games.append({
+                        'team1_espn': t1['team']['displayName'],
+                        'score1': int(t1.get('score') or 0),
+                        'winner1': t1.get('winner', False),
+                        'team2_espn': t2['team']['displayName'],
+                        'score2': int(t2.get('score') or 0),
+                    })
+        except Exception:
+            pass
+
+    updated = 0
+    with get_db() as conn:
+        db_teams  = {t['school_name']: t['team_id']
+                     for t in conn.execute('SELECT team_id, school_name FROM teams').fetchall()}
+        db_games  = conn.execute(
+            '''SELECT tg.game_id, t1.school_name as t1, t2.school_name as t2
+               FROM tournament_games tg
+               JOIN teams t1 ON tg.team1_id = t1.team_id
+               JOIN teams t2 ON tg.team2_id = t2.team_id
+               WHERE tg.season = ?''', (CURRENT_SEASON,)
+        ).fetchall()
+
+        for espn in espn_games:
+            n1 = strip_nickname(espn['team1_espn'])
+            n2 = strip_nickname(espn['team2_espn'])
+            for g in db_games:
+                m1 = get_close_matches(n1, [g['t1'], g['t2']], n=1, cutoff=0.5)
+                m2 = get_close_matches(n2, [g['t1'], g['t2']], n=1, cutoff=0.5)
+                if m1 and m2 and m1[0] != m2[0]:
+                    if get_close_matches(n1, [g['t1']], n=1, cutoff=0.5):
+                        sc1, sc2 = espn['score1'], espn['score2']
+                        winner_name = g['t1'] if espn['winner1'] else g['t2']
+                    else:
+                        sc1, sc2 = espn['score2'], espn['score1']
+                        winner_name = g['t2'] if espn['winner1'] else g['t1']
+                    winner_id = db_teams.get(winner_name)
+                    conn.execute(
+                        '''UPDATE tournament_games
+                           SET score1=?, score2=?, winner_id=?, margin=?
+                           WHERE game_id=? AND score1 IS NULL''',
+                        (sc1, sc2, winner_id, abs(sc1 - sc2), g['game_id'])
+                    )
+                    updated += 1
+                    break
+    return updated
+
+
+# ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
 st.sidebar.header("Controls")
+
+# Auto-refresh toggle
+auto_refresh = st.sidebar.toggle("🔴 Auto-refresh scores", value=True)
+refresh_interval = st.sidebar.selectbox("Refresh interval", [30, 60, 120, 300],
+                                         format_func=lambda x: f"{x}s", index=1)
+if auto_refresh:
+    import time as _time
+    st.sidebar.caption(f"Last sync: {_time.strftime('%I:%M:%S %p')}")
+
+if st.sidebar.button("⚡ Sync Scores Now") or auto_refresh:
+    n = sync_espn_scores()
+    if n:
+        st.sidebar.success(f"Updated {n} game(s)")
+
+if auto_refresh:
+    import streamlit as _st
+    _st.markdown(
+        f'<meta http-equiv="refresh" content="{refresh_interval}">',
+        unsafe_allow_html=True,
+    )
+
 if st.sidebar.button("🔄 Refresh from Sports Reference", type="primary"):
     with st.spinner("Scraping 2026 bracket..."):
         try:
