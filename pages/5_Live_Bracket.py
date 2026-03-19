@@ -382,8 +382,8 @@ def build_bracket_html(games):
     reg_css = ("position:absolute;font-size:11px;color:#4a8aff;font-weight:700;"
                "writing-mode:vertical-rl;transform:rotate(180deg);"
                "z-index:10;background:#0d1117;padding:2px 0;")
-    label_html += f'<div style="{reg_css}left:2px;top:{LABEL_H + REG_H*0.3}px;">EAST</div>'
-    label_html += f'<div style="{reg_css}left:2px;top:{LABEL_H + REG_H + REG_H*0.3}px;">SOUTH</div>'
+    label_html += f'<div style="{reg_css}left:-18px;top:{LABEL_H + REG_H*0.3}px;">EAST</div>'
+    label_html += f'<div style="{reg_css}left:-18px;top:{LABEL_H + REG_H + REG_H*0.3}px;">SOUTH</div>'
     label_html += f'<div style="{reg_css}right:2px;top:{LABEL_H + REG_H*0.3}px;">WEST</div>'
     label_html += f'<div style="{reg_css}right:2px;top:{LABEL_H + REG_H + REG_H*0.3}px;">MIDWEST</div>'
 
@@ -432,7 +432,7 @@ with tab_bracket:
 
         html = build_bracket_html(games)
         components.html(
-            f'<html><body style="margin:0;padding:8px;background:#0d1117;'
+            f'<html><body style="margin:0;padding:8px 8px 8px 28px;background:#0d1117;'
             f'overflow-x:auto;overflow-y:hidden;">'
             f'{html}</body></html>',
             height=HALF_H + LABEL_H + 40,
