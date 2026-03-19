@@ -367,12 +367,14 @@ def build_bracket_html(games):
     label_html += f'<div style="{lbl}left:{cx-30}px;top:4px;width:60px;color:#e8c84a;">CHAMP</div>'
 
     reg = ("position:absolute;font-size:11px;color:#4a8aff;font-weight:700;"
-           "writing-mode:vertical-rl;transform:rotate(180deg);"
-           "z-index:10;background:#0d1117;padding:2px 0;")
-    label_html += f'<div style="{reg}left:-18px;top:{LABEL_H+REG_H*0.35}px;">EAST</div>'
-    label_html += f'<div style="{reg}left:-18px;top:{LABEL_H+REG_H+REG_H*0.35}px;">SOUTH</div>'
-    label_html += f'<div style="{reg}right:2px;top:{LABEL_H+REG_H*0.35}px;">WEST</div>'
-    label_html += f'<div style="{reg}right:2px;top:{LABEL_H+REG_H+REG_H*0.35}px;">MIDWEST</div>'
+           "letter-spacing:1px;text-align:center;z-index:20;"
+           "background:rgba(13,17,23,0.85);padding:1px 6px;border-radius:3px;")
+    left_cx  = (4 * ROUND_W) / 2 - 25
+    right_cx = TOTAL_W - (4 * ROUND_W) / 2 - 25
+    label_html += f'<div style="{reg}left:{left_cx}px;top:{LABEL_H+6}px;">EAST</div>'
+    label_html += f'<div style="{reg}left:{left_cx}px;top:{LABEL_H+REG_H+6}px;">SOUTH</div>'
+    label_html += f'<div style="{reg}left:{right_cx}px;top:{LABEL_H+6}px;">WEST</div>'
+    label_html += f'<div style="{reg}left:{right_cx}px;top:{LABEL_H+REG_H+6}px;">MIDWEST</div>'
 
     CONTAINER_H = HALF_H + LABEL_H + 4
     CONTAINER_W = TOTAL_W + 20
@@ -500,7 +502,7 @@ for tab_idx, (scen_idx, label, games, fmt) in enumerate(active):
             st.caption(fmt.format(winner=champ["winner"].name, prob=champ["win_prob"]))
         html = build_bracket_html(games)
         components.html(
-            f'<html><body style="margin:0;padding:8px 8px 8px 28px;background:#0d1117;'
+            f'<html><body style="margin:0;padding:8px;background:#0d1117;'
             f'overflow-x:auto;overflow-y:hidden;">{html}</body></html>',
             height=HALF_H + LABEL_H + 60,
             scrolling=True,

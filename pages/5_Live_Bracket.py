@@ -378,14 +378,16 @@ def build_bracket_html(games):
     center_cx = CHAMP_X + GAME_W/2
     label_html += f'<div style="{lbl_css}left:{center_cx-30}px;top:4px;width:60px;color:#e8c84a;">CHAMP</div>'
 
-    # Region labels (vertical, left edge)
+    # Region labels — horizontal banners at the top of each region's area
     reg_css = ("position:absolute;font-size:11px;color:#4a8aff;font-weight:700;"
-               "writing-mode:vertical-rl;transform:rotate(180deg);"
-               "z-index:10;background:#0d1117;padding:2px 0;")
-    label_html += f'<div style="{reg_css}left:-18px;top:{LABEL_H + REG_H*0.3}px;">EAST</div>'
-    label_html += f'<div style="{reg_css}left:-18px;top:{LABEL_H + REG_H + REG_H*0.3}px;">SOUTH</div>'
-    label_html += f'<div style="{reg_css}right:2px;top:{LABEL_H + REG_H*0.3}px;">WEST</div>'
-    label_html += f'<div style="{reg_css}right:2px;top:{LABEL_H + REG_H + REG_H*0.3}px;">MIDWEST</div>'
+               "letter-spacing:1px;text-align:center;z-index:20;"
+               "background:rgba(13,17,23,0.85);padding:1px 6px;border-radius:3px;")
+    left_cx  = (4 * ROUND_W) / 2 - 25          # center of left half
+    right_cx = TOTAL_W - (4 * ROUND_W) / 2 - 25  # center of right half
+    label_html += f'<div style="{reg_css}left:{left_cx}px;top:{LABEL_H+6}px;">EAST</div>'
+    label_html += f'<div style="{reg_css}left:{left_cx}px;top:{LABEL_H+REG_H+6}px;">SOUTH</div>'
+    label_html += f'<div style="{reg_css}left:{right_cx}px;top:{LABEL_H+6}px;">WEST</div>'
+    label_html += f'<div style="{reg_css}left:{right_cx}px;top:{LABEL_H+REG_H+6}px;">MIDWEST</div>'
 
     # ------------------------------------------------------------------
     # Assemble SVG + cards into one container
@@ -432,7 +434,7 @@ with tab_bracket:
 
         html = build_bracket_html(games)
         components.html(
-            f'<html><body style="margin:0;padding:8px 8px 8px 28px;background:#0d1117;'
+            f'<html><body style="margin:0;padding:8px;background:#0d1117;'
             f'overflow-x:auto;overflow-y:hidden;">'
             f'{html}</body></html>',
             height=HALF_H + LABEL_H + 40,
