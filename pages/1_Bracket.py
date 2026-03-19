@@ -402,7 +402,7 @@ def build_bracket_html(games):
 
     return (f'<div style="position:relative;width:{CONTAINER_W}px;height:{CONTAINER_H+24}px;'
             f'background:#0d1117;font-family:\'Segoe UI\',system-ui,sans-serif;">'
-            f'{svg}{label_html}{card_html}{legend}</div>')
+            f'{svg}{card_html}{label_html}{legend}</div>')
 
 # ---------------------------------------------------------------------------
 # Session state: extra added scenarios + removed set
