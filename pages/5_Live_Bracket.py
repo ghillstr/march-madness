@@ -379,8 +379,9 @@ def build_bracket_html(games):
     label_html += f'<div style="{lbl_css}left:{center_cx-30}px;top:4px;width:60px;color:#e8c84a;">CHAMP</div>'
 
     # Region labels (vertical, left edge)
-    reg_css = ("position:absolute;font-size:11px;color:#3a6a9a;font-weight:700;"
-               "writing-mode:vertical-rl;transform:rotate(180deg);")
+    reg_css = ("position:absolute;font-size:11px;color:#4a8aff;font-weight:700;"
+               "writing-mode:vertical-rl;transform:rotate(180deg);"
+               "z-index:10;background:#0d1117;padding:2px 0;")
     label_html += f'<div style="{reg_css}left:2px;top:{LABEL_H + REG_H*0.3}px;">EAST</div>'
     label_html += f'<div style="{reg_css}left:2px;top:{LABEL_H + REG_H + REG_H*0.3}px;">SOUTH</div>'
     label_html += f'<div style="{reg_css}right:2px;top:{LABEL_H + REG_H*0.3}px;">WEST</div>'
