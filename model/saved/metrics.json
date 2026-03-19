@@ -1,0 +1,10 @@
+{
+  "test_accuracy": 87.2340425531915,
+  "margin_mae": 8.004413604736328,
+  "val_loss": 59.13295364379883,
+  "val_accuracy": 65.0,
+  "best_epoch": 57,
+  "train_samples": 924,
+  "val_samples": 100,
+  "test_samples": 94
+}

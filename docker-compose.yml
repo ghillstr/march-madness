@@ -1,0 +1,11 @@
+services:
+  march-madness:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      # Persist the database and trained model outside the container
+      - ./db/march_madness.db:/app/db/march_madness.db
+      - ./model/saved:/app/model/saved
+      - ./cache:/app/cache
+    restart: unless-stopped

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(kill 5062)",
+      "Bash(fuser -k 8501/tcp)",
+      "Bash(fuser -k 8502/tcp)",
+      "Bash(pkill -f \"streamlit\")"
+    ]
+  }
+}
