@@ -24,6 +24,8 @@ to predict game outcomes and simulate the 2026 March Madness bracket.
 - **Game Predictions** - Head-to-head matchup predictor for any two teams
 - **Team Explorer** - Deep dive into team stats, key players, and tournament history
 - **Model Insights** - Model accuracy, feature importance, and calibration analysis
+- **AI Analyst** - Ask questions in plain English; the analyst looks up the database
+  and runs the model to answer
 
 ### How It Works
 
@@ -31,6 +33,8 @@ to predict game outcomes and simulate the 2026 March Madness bracket.
 2. **Features**: 29 matchup differential features including efficiency, seeding, spreads, player metrics, and location
 3. **Model**: Dual-head PyTorch neural network predicting win probability and score margin
 4. **Simulation**: Monte Carlo simulation (10,000 runs) for championship odds
+5. **AI Layer**: Claude turns the model's output into scouting reports and answers
+   questions, grounded strictly in this database and these predictions
 
 ### Quick Start
 
@@ -81,3 +85,15 @@ if os.path.exists(model_path):
     st.success("Trained model found! Navigate to the pages to see predictions.")
 else:
     st.info("No trained model found. Run `python model/train.py` after collecting data.")
+
+# Check AI layer status
+from config import LLM_MODEL
+from llm.client import llm_available
+
+if llm_available():
+    st.success(f"AI analyst enabled (`{LLM_MODEL}`).")
+else:
+    st.info(
+        "AI analyst is off. Set `ANTHROPIC_API_KEY` to enable scouting reports "
+        "and the Ask the Analyst page. Everything else works without it."
+    )

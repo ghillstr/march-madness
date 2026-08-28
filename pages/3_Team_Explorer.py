@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 
 from db.database import get_db, get_all_teams
 from config import CURRENT_SEASON
+from llm import context as llm_context
+from llm import ui as llm_ui
 
 st.set_page_config(page_title="Team Explorer", page_icon="\U0001f3c0", layout="wide")
 st.title("\U0001f3c0 Team Explorer")
@@ -86,6 +88,18 @@ st.markdown(f"## {selected}")
 if team:
     conf = team["conference"] or "Unknown"
     st.caption(f"Conference: {conf}")
+
+st.markdown("---")
+
+# AI scouting report
+st.subheader("\U0001f9e0 AI Scouting Report")
+with get_db() as conn:
+    scouting_pack = llm_context.team_pack(conn, team_id, CURRENT_SEASON)
+llm_ui.render_report(
+    "team", scouting_pack,
+    label=f"Scout {selected}",
+    spinner=f"Scouting {selected}...",
+)
 
 st.markdown("---")
 

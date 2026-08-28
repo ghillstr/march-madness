@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 
 from db.database import get_db
 from config import CURRENT_SEASON, MODEL_DIR
+from llm import context as llm_context
+from llm import ui as llm_ui
 
 st.set_page_config(page_title="Bracket", page_icon="🏀", layout="wide")
 st.title("🏀 2026 Tournament Bracket — Model Predictions")
@@ -492,7 +494,8 @@ if len(active) > 1:
 # ---------------------------------------------------------------------------
 # Tabs: one per active scenario + Championship Odds
 # ---------------------------------------------------------------------------
-tab_labels = [label for _, label, _, _ in active] + ["📊 Championship Odds"]
+tab_labels = ([label for _, label, _, _ in active]
+              + ["📊 Championship Odds", "🧠 AI Analysis"])
 all_tabs   = st.tabs(tab_labels)
 
 for tab_idx, (scen_idx, label, games, fmt) in enumerate(active):
@@ -508,7 +511,7 @@ for tab_idx, (scen_idx, label, games, fmt) in enumerate(active):
             scrolling=True,
         )
 
-with all_tabs[-1]:
+with all_tabs[len(active)]:
     if mc_results:
         st.subheader("Championship Odds (Monte Carlo)")
         odds_data = []
@@ -546,3 +549,35 @@ with all_tabs[-1]:
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Switch to **Monte Carlo** mode in the sidebar to see championship odds.")
+
+# ---------------------------------------------------------------------------
+# AI analysis of the predicted bracket
+# ---------------------------------------------------------------------------
+with all_tabs[-1]:
+    st.subheader("🧠 AI Bracket Analysis")
+    st.caption(
+        "Written from the model's own picks and the Monte Carlo odds above — "
+        "no outside information."
+    )
+
+    if llm_ui.available():
+        bracket_pack = llm_context.bracket_pack(
+            det_games, odds=mc_results, season=CURRENT_SEASON
+        )
+
+        st.markdown("#### The bracket, walked through")
+        llm_ui.render_report(
+            "bracket", bracket_pack,
+            label="Walk through this bracket",
+            spinner="Reading the bracket...",
+            show_notice=False,
+        )
+
+        st.markdown("---")
+        st.markdown("#### Upset watch")
+        llm_ui.render_report(
+            "upsets", bracket_pack,
+            label="Find the upsets",
+            spinner="Hunting upsets...",
+            show_notice=False,
+        )

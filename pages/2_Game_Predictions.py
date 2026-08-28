@@ -11,6 +11,8 @@ import numpy as np
 from db.database import get_db, get_all_teams
 from model.predict import Predictor
 from config import CURRENT_SEASON, MODEL_DIR
+from llm import context as llm_context
+from llm import ui as llm_ui
 
 st.set_page_config(page_title="Game Predictions", page_icon="\U0001f3c0", layout="wide")
 st.title("\U0001f3c0 Head-to-Head Game Predictions")
@@ -44,6 +46,12 @@ with col2:
     seed2 = st.number_input("Seed (optional)", 1, 16, 8, key="seed2")
 
 if st.button("Predict Game", type="primary"):
+    st.session_state.prediction = (team1_name, team2_name, seed1, seed2)
+
+# Rendered from session state, not straight from the button, so generating the
+# AI breakdown below does not clear the prediction it is describing.
+if st.session_state.get("prediction"):
+    team1_name, team2_name, seed1, seed2 = st.session_state.prediction
     t1_id = team_map[team1_name]
     t2_id = team_map[team2_name]
 
@@ -171,3 +179,26 @@ if st.button("Predict Game", type="primary"):
             data["Advantage"].append(adv)
 
         st.dataframe(pd.DataFrame(data), use_container_width=True)
+
+    # ---------------------------------------------------------------------
+    # AI analyst breakdown
+    # ---------------------------------------------------------------------
+    st.markdown("---")
+    st.subheader("\U0001f9e0 AI Analyst Breakdown")
+    st.caption(
+        "Written from this prediction, the ranked model inputs behind it, and "
+        "both team profiles \u2014 no outside information."
+    )
+
+    if llm_ui.available():
+        with get_db() as conn:
+            matchup_pack = llm_context.matchup_pack(
+                conn, predictor, t1_id, t2_id,
+                seed1=seed1, seed2=seed2, season=CURRENT_SEASON,
+            )
+        llm_ui.render_report(
+            "matchup", matchup_pack,
+            label="Break down this matchup",
+            spinner="Breaking down the matchup...",
+            show_notice=False,
+        )
