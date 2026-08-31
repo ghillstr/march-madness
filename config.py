@@ -48,7 +48,8 @@ MARGIN_LOSS_WEIGHT = 0.4
 # Monte Carlo
 MC_SIMULATIONS = 10000
 
-# Feature names (for display/importance)
+# Feature names (for display/importance).
+# Order must match build_matchup_features() in features/feature_engineering.py.
 FEATURE_NAMES = [
     "ORtg_diff", "DRtg_diff", "NetRtg_diff", "Pace_diff",
     "SRS_diff", "SOS_diff", "eFG%_diff", "TOV%_diff",
@@ -57,7 +58,28 @@ FEATURE_NAMES = [
     "seed_diff", "seed_sum", "seed_product", "hist_seed_win_rate",
     "spread", "over_under",
     "top_scorer_diff", "experience_diff", "roster_depth_diff", "star_power_diff",
+    "injury_impact_diff",
     "win_pct_diff", "MOV_diff", "away_win_pct_diff",
     "distance_adv_diff", "home_region_flag",
-    "injury_impact_diff",
 ]
+
+# ---------------------------------------------------------------------------
+# LLM layer (Anthropic Claude)
+# ---------------------------------------------------------------------------
+# The LLM layer is strictly additive: with no API key the app behaves exactly
+# as it did before, and every AI section degrades to a short notice.
+LLM_MODEL = os.getenv("LLM_MODEL", "claude-opus-5")
+LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "16000"))
+
+# Effort controls how much the model thinks before answering.
+# "low" suits the short scouting writeups; the chat analyst runs a notch higher
+# because it plans multi-step tool calls.
+LLM_EFFORT = os.getenv("LLM_EFFORT", "low")
+LLM_AGENT_EFFORT = os.getenv("LLM_AGENT_EFFORT", "medium")
+
+# Max tool-calling rounds the chat analyst may take before it must answer.
+LLM_MAX_TOOL_ROUNDS = int(os.getenv("LLM_MAX_TOOL_ROUNDS", "12"))
+
+# Generated reports are cached on disk keyed by their grounding data, so
+# re-rendering a page costs nothing.
+LLM_CACHE_DIR = os.path.join(CACHE_DIR, "llm")

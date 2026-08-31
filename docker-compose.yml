@@ -3,6 +3,9 @@ services:
     build: .
     ports:
       - "8501:8501"
+    environment:
+      # Enables the AI analyst. Left unset, the app runs exactly as before.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
       # Persist the database and trained model outside the container
       - ./db/march_madness.db:/app/db/march_madness.db

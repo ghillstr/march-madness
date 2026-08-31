@@ -13,6 +13,8 @@ A neural network-powered NCAA tournament bracket simulator with a full Streamlit
 - **Team Explorer** — Deep dive into team stats and tournament history
 - **Model Insights** — Feature importance, accuracy, and calibration analysis
 - **Injury Awareness** — Scrapes current injury reports from ESPN and factors them into predictions
+- **AI Analyst** — Claude-powered scouting reports on any matchup, team or bracket, plus a chat
+  analyst that queries the database and runs the model to answer questions
 
 ---
 
@@ -31,6 +33,16 @@ A neural network-powered NCAA tournament bracket simulator with a full Streamlit
 - **Features**: 30 matchup differential features including offensive/defensive efficiency, seeding, spreads, player metrics, travel distance, and injury impact
 - **Training**: Early stopping, Adam optimizer, combined BCE + MSE loss
 - **Test Accuracy**: ~87%
+
+### AI Layer
+- **Model**: Claude (`claude-opus-5` by default) via the Anthropic API
+- **Grounding**: every report is written from a context pack built out of this database — team
+  stats, roster aggregates, injuries, tournament history — plus the network's own prediction and
+  the ranked model inputs behind it. The analyst is instructed to use nothing else
+- **Chat**: the Ask the Analyst page gives Claude tools that read the same database and run the
+  same network, so a chat answer and a page can't disagree
+- **Optional**: with no API key the app behaves exactly as it did before — AI sections show a
+  notice and every existing page is untouched
 
 ### Simulation
 - Deterministic mode: always picks the higher-probability winner
@@ -124,6 +136,56 @@ march-madness/
 | Right | West | Midwest |
 
 Final Four pairings: **East vs South** · **West vs Midwest**
+
+---
+
+## AI Layer
+
+The AI features are optional and off until you provide a key:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+streamlit run app.py
+```
+
+With Docker, the key is passed through from your shell:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... docker compose up -d
+```
+
+**What you get**
+
+| Page | AI feature |
+|------|-----------|
+| Game Predictions | Scouting report on the matchup: the pick, why, the case against, an X-factor |
+| Team Explorer | Scouting report on the selected team's profile |
+| Bracket | Walkthrough of the predicted bracket, and an upset watch list |
+| Ask the Analyst | Chat — it searches teams, pulls stats, runs the model, and simulates odds |
+
+**How it stays honest**
+
+Every report is generated from a JSON context pack assembled in `llm/context.py`, and the system
+prompt (`llm/prompts.py`) restricts the analyst to those facts. It cannot pull in half-remembered
+college basketball trivia, and it can't override the network — the win probability it quotes is the
+one the model produced. Missing data is reported as missing.
+
+**Cost control**
+
+- Reports are generated only when you click the button, never on page load
+- Generated reports are cached on disk (`cache/llm/`) keyed by their grounding data, so
+  re-rendering a page is free
+- The frozen system prompt is sent as a cached prefix, so repeat calls only pay for the new context
+
+**Tuning**
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `ANTHROPIC_API_KEY` | — | Enables the AI layer |
+| `LLM_MODEL` | `claude-opus-5` | Model to use |
+| `LLM_EFFORT` | `low` | Thinking effort for reports |
+| `LLM_AGENT_EFFORT` | `medium` | Thinking effort for chat (it plans tool calls) |
+| `LLM_MAX_TOOL_ROUNDS` | `12` | Tool-call budget per chat answer |
 
 ---
 
